@@ -7,9 +7,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ContactManagement.Data;
 using ContactManagement.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ContactManagement.Controllers
 {
+    [Authorize]
     public class PhonesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -22,7 +25,10 @@ namespace ContactManagement.Controllers
         // GET: Phones
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Phones.ToListAsync());
+            var userName = User.Identity.Name;
+            var user = _context.Users.FirstOrDefault(u => u.UserName == userName);
+
+            return View(await _context.Phones.Where(p => p.UserId == user.Id).ToListAsync());
         }
 
         // GET: Phones/Details/5
@@ -54,15 +60,24 @@ namespace ContactManagement.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,firstName,lastName,email,phoneNumber,UserId")] Phones phones)
+        public async Task<IActionResult> Create(Phones phones)
         {
-            if (ModelState.IsValid)
+            var userName = User.Identity.Name;
+            var user = _context.Users.FirstOrDefault(u => u.UserName == userName);
+
+            phones.UserId = user.Id;
+            /* if (!ModelState.IsValid)
             {
-                _context.Add(phones);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(phones);
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+                foreach (var error in errors)
+                {
+                    Console.WriteLine(error.ErrorMessage);
+                }
+                return View(phones);
+            } */
+            _context.Phones.Add(phones);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Phones/Edit/5

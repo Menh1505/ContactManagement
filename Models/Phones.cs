@@ -17,7 +17,6 @@ namespace ContactManagement.Models
         [Required]
         [StringLength(10)]
         public string phoneNumber { get; set; }
-        [Required]
-        public int UserId { get; set; }
+        public string UserId { get; set; }
     }
 }
